@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stok Lorong SKU & Kalkulator Ekor</title>
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --primary: #1e3a8a;
+      --primary-dark: #172554;
+      --accent: #0d9488;
+      --border: #e2e8f0;
+      --soft: #f8fafc;
+      --warn-bg: #fef3c7;
+      --warn-tx: #92400e;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      padding: 10px 10px 76px;
+    }
+
+    .wrap {
+      max-width: 920px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 1.08rem;
+    }
+
+    .sub {
+      margin: 0 0 10px;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    input, select, button {
+      font-family: inherit;
+      font-size: 0.9rem;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      padding: 7px 9px;
+      background: #fff;
+      color: var(--text);
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 600;
+      border: none;
+    }
+
+    .btn-p { background: var(--primary); color: #fff; }
+    .btn-p:hover { background: var(--primary-dark); }
+    .btn-a { background: var(--accent); color: #fff; }
+    .btn-s { background: #e2e8f0; color: #0f172a; }
+    .btn-d { background: #fee2e2; color: #991b1b; }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    @media (min-width: 640px) {
+      .kpi-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    .kpi {
+      background: var(--soft);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px;
+    }
+
+    .kpi .lbl { font-size: 0.72rem; color: var(--muted); }
+    .kpi .val { font-size: 1.05rem; font-weight: 800; margin-top: 2px; }
+
+    .sku-card {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 8px;
+      background: #fff;
+    }
+
+    .sku-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .sku-code {
+      font-weight: 800;
+      font-size: 0.98rem;
+    }
+
+    .sku-ref {
+      font-size: 0.73rem;
+      color: var(--muted);
+    }
+
+    .box-total {
+      background: #dbeafe;
+      color: #1e3a8a;
+      font-weight: 800;
+      font-size: 0.88rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .warn-note {
+      background: var(--warn-bg);
+      color: var(--warn-tx);
+      font-size: 0.74rem;
+      font-weight: 600;
+      padding: 5px 8px;
+      border-radius: 7px;
+      margin-bottom: 8px;
+      display: none;
+    }
+
+    .warn-note.show { display: block; }
+
+    .input-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 0.73rem;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 3px;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 8px;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .sku-foot {
+      margin-top: 8px;
+      background: var(--soft);
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-size: 0.75rem;
+      color: #334155;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    /* Floating Kalkulator Button */
+    .fab-calc {
+      position: fixed;
+      right: 14px;
+      bottom: 14px;
+      z-index: 40;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 999px;
+      padding: 11px 16px;
+      font-size: 0.9rem;
+      box-shadow: 0 6px 18px rgba(13, 148, 136, 0.35);
+    }
+
+    /* Modal Kalkulator */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      z-index: 50;
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .calc-modal {
+      width: 100%;
+      max-width: 340px;
+      background: #fff;
+      border-radius: 14px;
+      padding: 12px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
+    }
+
+    .calc-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .calc-screen {
+      background: #0f172a;
+      color: #f8fafc;
+      border-radius: 10px;
+      padding: 10px;
+      text-align: right;
+      margin-bottom: 8px;
+    }
+
+    .calc-expr {
+      font-size: 0.75rem;
+      color: #94a3b8;
+      min-height: 16px;
+      word-break: break-all;
+    }
+
+    .calc-val {
+      font-size: 1.45rem;
+      font-weight: 800;
+      margin-top: 2px;
+    }
+
+    .calc-keys {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+    }
+
+    .calc-keys button {
+      padding: 10px;
+      font-size: 0.95rem;
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+
+    .calc-keys button.op { background: #dbeafe; color: #1e3a8a; }
+    .calc-keys button.eq { background: var(--primary); color: #fff; }
+    .calc-keys button.clr { background: #fee2e2; color: #991b1b; }
+
+    .apply-row {
+      margin-top: 8px;
+      display: flex;
+      gap: 6px;
+    }
+
+    .apply-row select {
+      flex: 1;
+      font-size: 0.82rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Stok Lorong SKU</h1>
+      <p class="sub">Acuan <strong>Kaki</strong>, <strong>Kepala</strong> & <strong>1 Tumpuk (Kaki+Kepala)</strong> per SKU. Maksimal <strong>5 tumpuk</strong> per lorong.</p>
+      <div class="toolbar">
+        <input type="date" id="tgl" />
+        <input type="text" id="cari" placeholder="Cari SKU..." style="max-width:150px;" />
+        <button type="button" class="btn-s" id="exportBtn">Export CSV</button>
+        <button type="button" class="btn-d" id="resetBtn">Reset Input</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="kpi-grid" id="kpi"></div>
+    </div>
+
+    <div id="skuList"></div>
+  </div>
+
+  <button type="button" class="fab-calc" id="openCalcBtn">Kalkulator Ekor</button>
+
+  <div class="modal-backdrop" id="calcModal">
+    <div class="calc-modal">
+      <div class="calc-head">
+        <strong>Kalkulator Ekor / Sisa Box</strong>
+        <button type="button" class="btn-s" id="closeCalcBtn" style="padding:4px 9px;">Tutup</button>
+      </div>
+      <div class="calc-screen">
+        <div class="calc-expr" id="calcExpr"></div>
+        <div class="calc-val" id="calcDisp">0</div>
+      </div>
+      <div class="calc-keys" id="calcKeys">
+        <button type="button" class="clr" data-k="C">C</button>
+        <button type="button" class="op" data-k="(">(</button>
+        <button type="button" class="op" data-k=")">)</button>
+        <button type="button" class="op" data-k="/">÷</button>
+
+        <button type="button" data-k="7">7</button>
+        <button type="button" data-k="8">8</button>
+        <button type="button" data-k="9">9</button>
+        <button type="button" class="op" data-k="*">×</button>
+
+        <button type="button" data-k="4">4</button>
+        <button type="button" data-k="5">5</button>
+        <button type="button" data-k="6">6</button>
+        <button type="button" class="op" data-k="-">−</button>
+
+        <button type="button" data-k="1">1</button>
+        <button type="button" data-k="2">2</button>
+        <button type="button" data-k="3">3</button>
+        <button type="button" class="op" data-k="+">+</button>
+
+        <button type="button" data-k="0">0</button>
+        <button type="button" data-k=".">.</button>
+        <button type="button" class="clr" data-k="BACK">⌫</button>
+        <button type="button" class="eq" data-k="=">=</button>
+      </div>
+      <div class="apply-row">
+        <select id="targetSkuSelect"></select>
+        <button type="button" class="btn-a" id="applyToSisaBtn">Isi ke Sisa Box</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const MAX_TUMPUK = 5;
+    const PREFIX = "stok_lorong_acuan_v1_";
+
+    // Data acuan utama sesuai screenshot
+    const MASTER_SKU = [
+      { sku: "MLD16", kaki: 42, kepala: 30, satuTumpuk: 72 },
+      { sku: "AVR",   kaki: 48, kepala: 0,  satuTumpuk: 48 },
+      { sku: "MFB12", kaki: 32, kepala: 0,  satuTumpuk: 32 },
+      { sku: "MFB20", kaki: 32, kepala: 0,  satuTumpuk: 32 },
+      { sku: "MLD12", kaki: 40, kepala: 0,  satuTumpuk: 40 },
+      { sku: "MBL",   kaki: 48, kepala: 36, satuTumpuk: 84 },
+      { sku: "DSM",   kaki: 30, kepala: 12, satuTumpuk: 42 },
+      { sku: "MLD50", kaki: 48, kepala: 0,  satuTumpuk: 48 },
+      { sku: "DSB16", kaki: 28, kepala: 0,  satuTumpuk: 28 },
+      { sku: "MBC",   kaki: 32, kepala: 0,  satuTumpuk: 32 },
+      { sku: "DSB12", kaki: 40, kepala: 20, satuTumpuk: 60 },
+      { sku: "SAI",   kaki: 24, kepala: 16, satuTumpuk: 40 },
+      { sku: "SLE",   kaki: 24, kepala: 12, satuTumpuk: 36 },
+      { sku: "DSS16", kaki: 20, kepala: 0,  satuTumpuk: 20 }
+    ];
+
+    const tglEl = document.getElementById("tgl");
+    const cariEl = document.getElementById("cari");
+    const listEl = document.getElementById("skuList");
+    const kpiEl = document.getElementById("kpi");
+    const targetSkuSelect = document.getElementById("targetSkuSelect");
+
+    const today = () => new Date().toISOString().slice(0, 10);
+    tglEl.value = today();
+
+    const storageKey = () => PREFIX + (tglEl.value || today());
+
+    const loadEntries = () => {
+      try {
+        const raw = localStorage.getItem(storageKey());
+        if (raw) return JSON.parse(raw);
+      } catch {}
+      return MASTER_SKU.map((m) => ({
+        sku: m.sku,
+        tumpuk: 0,
+        kepala: 0,
+        sisaBox: 0
+      }));
+    };
+
+    const saveEntries = (entries) => {
+      localStorage.setItem(storageKey(), JSON.stringify(entries));
+    };
+
+    const getMaster = (sku) => MASTER_SKU.find((m) => m.sku === sku) || { kaki: 0, kepala: 0, satuTumpuk: 0 };
+
+    const calcSku = (entry) => {
+      const m = getMaster(entry.sku);
+      const tumpuk = Math.max(0, Number(entry.tumpuk) || 0);
+      const kepala = Math.max(0, Number(entry.kepala) || 0);
+      const sisaBox = Math.max(0, Number(entry.sisaBox) || 0);
+      const overMax = tumpuk > MAX_TUMPUK;
+
+      const dariTumpuk = tumpuk * m.satuTumpuk;
+      const dariKepala = kepala * m.kepala;
+      const totalBox = dariTumpuk + dariKepala + sisaBox;
+
+      return { m, tumpuk, kepala, sisaBox, overMax, dariTumpuk, dariKepala, totalBox };
+    };
+
+    const populateTargetSelect = (entries) => {
+      const prev = targetSkuSelect.value;
+      targetSkuSelect.innerHTML = entries
+        .map((e) => `<option value="${e.sku}">${e.sku}</option>`)
+        .join("");
+      if (prev && entries.some((e) => e.sku === prev)) {
+        targetSkuSelect.value = prev;
+      }
+    };
+
+    const render = () => {
+      const entries = loadEntries();
+      populateTargetSelect(entries);
+
+      const q = cariEl.value.trim().toLowerCase();
+      let grandTotal = 0;
+      let totalTumpuk = 0;
+      let aktif = 0;
+      let overCount = 0;
+
+      for (const e of entries) {
+        const c = calcSku(e);
+        grandTotal += c.totalBox;
+        totalTumpuk += c.tumpuk;
+        if (c.totalBox > 0) aktif++;
+        if (c.overMax) overCount++;
+      }
+
+      kpiEl.innerHTML = `
+        <div class="kpi"><div class="lbl">SKU Terisi</div><div class="val">${aktif} / ${entries.length}</div></div>
+        <div class="kpi"><div class="lbl">Total Tumpuk</div><div class="val">${totalTumpuk}</div></div>
+        <div class="kpi"><div class="lbl">Melebihi Maks 5 Tumpuk</div><div class="val">${overCount} SKU</div></div>
+        <div class="kpi"><div class="lbl">Total Semua Box</div><div class="val">${grandTotal.toLocaleString("id-ID")} box</div></div>
+      `;
+
+      const filtered = entries
+        .map((e, idx) => ({ e, idx }))
+        .filter(({ e }) => e.sku.toLowerCase().includes(q));
+
+      listEl.innerHTML = filtered.map(({ e, idx }) => {
+        const c = calcSku(e);
+        return `
+          <div class="sku-card">
+            <div class="sku-top">
+              <div>
+                <span class="sku-code">${e.sku}</span>
+                <div class="sku-ref">Acuan: Kaki ${c.m.kaki} • Kepala ${c.m.kepala} • 1 Tumpuk = <b>${c.m.satuTumpuk}</b></div>
+              </div>
+              <span class="box-total">${c.totalBox.toLocaleString("id-ID")} box</span>
+            </div>
+
+            <div class="warn-note ${c.overMax ? "show" : ""}">
+              Melebihi batas maksimal ${MAX_TUMPUK} tumpuk per lorong!
+            </div>
+
+            <div class="input-3">
+              <div class="field">
+                <label>Tumpuk (Maks ${MAX_TUMPUK})</label>
+                <input type="number" min="0" inputmode="numeric" value="${e.tumpuk}" onchange="setEntry(${idx}, 'tumpuk', this.value)" />
+              </div>
+              <div class="field">
+                <label>Kepala</label>
+                <input type="number" min="0" inputmode="numeric" value="${e.kepala}" onchange="setEntry(${idx}, 'kepala', this.value)" />
+              </div>
+              <div class="field">
+                <label>Sisa Box</label>
+                <input type="number" min="0" inputmode="numeric" value="${e.sisaBox}" onchange="setEntry(${idx}, 'sisaBox', this.value)" />
+              </div>
+            </div>
+
+            <div class="sku-foot">
+              <span>${c.tumpuk}×${c.m.satuTumpuk} (${c.dariTumpuk}) + ${c.kepala}×${c.m.kepala} (${c.dariKepala}) + ${c.sisaBox} = <b>${c.totalBox} box</b></span>
+              <button type="button" class="btn-s" style="padding:3px 8px;font-size:0.74rem;" onclick="openCalcForSku('${e.sku}')">Hitung Ekor</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    };
+
+    window.setEntry = (idx, field, val) => {
+      const entries = loadEntries();
+      if (!entries[idx]) return;
+      entries[idx][field] = Math.max(0, Number(val) || 0);
+      saveEntries(entries);
+      render();
+    };
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      if (confirm("Kosongkan semua input tumpuk, kepala, dan sisa box pada tanggal ini?")) {
+        const clean = MASTER_SKU.map((m) => ({ sku: m.sku, tumpuk: 0, kepala: 0, sisaBox: 0 }));
+        saveEntries(clean);
+        render();
+      }
+    });
+
+    document.getElementById("exportBtn").addEventListener("click", () => {
+      const entries = loadEntries();
+      const headers = [
+        "Tanggal", "SKU", "Kaki_Acuan", "Kepala_Acuan", "Satu_Tumpuk",
+        "Tumpuk", "Kepala_Input", "Sisa_Box", "Total_Box"
+      ];
+      const rows = entries.map((e) => {
+        const c = calcSku(e);
+        return [
+          tglEl.value, e.sku, c.m.kaki, c.m.kepala, c.m.satuTumpuk,
+          c.tumpuk, c.kepala, c.sisaBox, c.totalBox
+        ].join(",");
+      });
+      const blob = new Blob([[headers.join(","), ...rows].join("\n")], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `stok-lorong-sku-${tglEl.value}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Kalkulator Ekor
+    const calcModal = document.getElementById("calcModal");
+    const calcExprEl = document.getElementById("calcExpr");
+    const calcDispEl = document.getElementById("calcDisp");
+    let expr = "";
+    let lastResult = 0;
+
+    const syncCalc = () => {
+      calcExprEl.textContent = expr;
+      calcDispEl.textContent = String(lastResult);
+    };
+
+    const evalExpr = () => {
+      if (!expr.trim()) {
+        lastResult = 0;
+        syncCalc();
+        return;
+      }
+      const safe = expr.replace(/[^0-9+\-*/().]/g, "");
+      try {
+        const res = Function(`"use strict"; return (${safe});`)();
+        if (typeof res === "number" && Number.isFinite(res)) {
+          lastResult = Math.round(res * 100) / 100;
+          calcDispEl.textContent = String(lastResult);
+        } else {
+          calcDispEl.textContent = "Error";
+        }
+      } catch {
+        calcDispEl.textContent = "Error";
+      }
+    };
+
+    window.openCalcForSku = (sku) => {
+      targetSkuSelect.value = sku;
+      calcModal.classList.add("open");
+    };
+
+    document.getElementById("openCalcBtn").addEventListener("click", () => {
+      calcModal.classList.add("open");
+    });
+
+    document.getElementById("closeCalcBtn").addEventListener("click", () => {
+      calcModal.classList.remove("open");
+    });
+
+    document.getElementById("calcKeys").addEventListener("click", (e) => {
+      const btn = e.target.closest("button");
+      if (!btn) return;
+      const k = btn.dataset.k;
+      if (k === "C") {
+        expr = "";
+        lastResult = 0;
+        syncCalc();
+      } else if (k === "BACK") {
+        expr = expr.slice(0, -1);
+        syncCalc();
+      } else if (k === "=") {
+        evalExpr();
+      } else {
+        expr += k;
+        syncCalc();
+      }
+    });
+
+    document.getElementById("applyToSisaBtn").addEventListener("click", () => {
+      evalExpr();
+      const targetSku = targetSkuSelect.value;
+      const entries = loadEntries();
+      const idx = entries.findIndex((x) => x.sku === targetSku);
+      if (idx >= 0) {
+        entries[idx].sisaBox = Math.max(0, Math.round(Number(lastResult) || 0));
+        saveEntries(entries);
+        render();
+        calcModal.classList.remove("open");
+      }
+    });
+
+    tglEl.addEventListener("change", render);
+    cariEl.addEventListener("input", render);
+    render();
+  </script>
+</body>
+</html>
